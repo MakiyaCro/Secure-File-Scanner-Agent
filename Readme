@@ -1,0 +1,118 @@
+# VulnScan v2.4 — Local AI Code Security Analysis
+
+A **fully local** AI-powered code vulnerability scanner with a retro terminal UI.
+Powered by **Qwen3** via **Ollama** — no internet required after setup.
+
+---
+
+## Quick Start
+
+```bash
+# 1. Install Ollama (if not already)
+#    https://ollama.com
+
+# 2. Clone / place this folder, then:
+chmod +x run.sh
+./run.sh
+```
+
+The script will:
+- Check Ollama is installed and running
+- Pull the `qwen3.5:9b` model if missing
+- Set up a Python virtual environment
+- Install Flask dependencies
+- Launch the app at http://127.0.0.1:5000
+
+---
+
+## Manual Start
+
+```bash
+# Ensure Ollama is running with Qwen3
+ollama serve &
+ollama pull qwen3.5:9b    # if not already pulled
+
+# Install Python deps
+pip install -r requirements.txt
+
+# Run
+python app.py
+```
+
+---
+
+## Features
+
+| Feature | Detail |
+|---|---|
+| **Multi-file scan** | Upload an entire codebase folder |
+| **Cross-file context** | Scanner sees how files relate |
+| **Severity filter** | Critical / High / Medium / Low |
+| **Fix generation** | Full corrected file + change log |
+| **Integrity check** | Verifies fix doesn't break app logic |
+| **Diff view** | Side-by-side original vs fixed |
+| **One-click patch** | Write fix back to session file |
+| **Download** | Grab patched files |
+
+---
+
+## Security Guardrails
+
+- **Prompt injection detection** — files are scanned for override attempts before being sent to the LLM
+- **Path traversal prevention** — all file operations are sandboxed to session directories
+- **Rate limiting** — 10 requests per 60 seconds per IP
+- **File type allowlist** — only source code extensions accepted
+- **Binary rejection** — non-text files are refused
+- **Size caps** — 500 KB per file, 50 MB total, 100 files max
+- **No code execution** — purely static analysis
+- **Security headers** — CSP, X-Frame-Options, etc.
+- **Session isolation** — each browser session gets its own directory
+
+---
+
+## Supported File Types
+
+`.py` `.js` `.ts` `.jsx` `.tsx` `.java` `.c` `.cpp` `.h` `.hpp` `.cs`
+`.go` `.rs` `.php` `.rb` `.swift` `.kt` `.scala` `.sh` `.bash` `.sql`
+`.html` `.css` `.json` `.yaml` `.yml` `.toml` `.env` `.cfg` `.conf` `.xml` `.tf` `.hcl`
+
+---
+
+## Adjusting the Model
+
+Edit `core/scanner.py`:
+
+```python
+MODEL = "qwen3.5:9b"        
+TIMEOUT = 300          # seconds per LLM call
+```
+
+For large codebases, increase `TIMEOUT` and use a larger model variant.
+
+---
+
+## Project Structure
+
+```
+vulnscan/
+├── app.py              # Flask app, routes, security middleware
+├── requirements.txt
+├── run.sh              # Setup & launch script
+├── core/
+│   ├── scanner.py      # Ollama/Qwen3 interaction, prompts
+│   ├── guardrails.py   # Prompt injection detection
+│   └── file_manager.py # Safe file loading
+├── templates/
+│   └── index.html      # Retro terminal UI
+├── uploads/            # Session file storage (auto-created)
+└── outputs/            # Scan result JSON (auto-created)
+```
+
+---
+
+## Notes
+
+- The app binds to `127.0.0.1` only — not exposed to the network
+- Each scan session is UUID-isolated; cleared on browser session end
+- Scan times depend on Qwen3 model size and number of files
+- `.bak` backups are created before any patch is applied

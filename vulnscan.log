@@ -1,0 +1,114 @@
+2026-04-13 15:59:09,985 [INFO] vulnscan: VulnScan starting — http://127.0.0.1:5000
+2026-04-13 15:59:10,003 [INFO] werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2026-04-13 15:59:10,003 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
+2026-04-13 15:59:15,818 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 15:59:15] "GET / HTTP/1.1" 200 -
+2026-04-13 15:59:16,160 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 15:59:16] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-04-13 15:59:18,067 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 15:59:18] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 15:59:33,053 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 15:59:33] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 15:59:48,038 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 15:59:48] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:00:03,051 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:00:03] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:00:15,761 [INFO] vulnscan: Uploaded: index.html (513 bytes) session=152606ec-511a-463c-85b2-934e018926ce
+2026-04-13 16:00:15,762 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:00:15] "POST /api/upload HTTP/1.1" 200 -
+2026-04-13 16:00:18,060 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:00:18] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:00:18,767 [INFO] vulnscan: Starting scan: 1 files, session=152606ec-511a-463c-85b2-934e018926ce
+2026-04-13 16:00:18,767 [INFO] vulnscan.scanner: Scanning index.html (499 chars)
+2026-04-13 16:00:33,083 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:00:33] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:00:34,037 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:00:34] "POST /api/scan HTTP/1.1" 200 -
+2026-04-13 16:00:48,059 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:00:48] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:01:03,073 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:01:03] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:01:11,793 [INFO] vulnscan: Uploaded: FinalPage.js (2688 bytes) session=152606ec-511a-463c-85b2-934e018926ce
+2026-04-13 16:01:11,808 [INFO] vulnscan: Uploaded: Puzzle1.js (2991 bytes) session=152606ec-511a-463c-85b2-934e018926ce
+2026-04-13 16:01:11,823 [INFO] vulnscan: Uploaded: Puzzle2.js (3332 bytes) session=152606ec-511a-463c-85b2-934e018926ce
+2026-04-13 16:01:11,838 [INFO] vulnscan: Uploaded: Puzzle3.js (3492 bytes) session=152606ec-511a-463c-85b2-934e018926ce
+2026-04-13 16:01:11,853 [INFO] vulnscan: Uploaded: Puzzle4.js (2955 bytes) session=152606ec-511a-463c-85b2-934e018926ce
+2026-04-13 16:01:11,867 [INFO] vulnscan: Uploaded: Puzzle5.js (3084 bytes) session=152606ec-511a-463c-85b2-934e018926ce
+2026-04-13 16:01:11,882 [INFO] vulnscan: Uploaded: Puzzle6.js (3048 bytes) session=152606ec-511a-463c-85b2-934e018926ce
+2026-04-13 16:01:11,895 [INFO] vulnscan: Uploaded: SplashPage.js (961 bytes) session=152606ec-511a-463c-85b2-934e018926ce
+2026-04-13 16:01:11,895 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:01:11] "POST /api/upload HTTP/1.1" 200 -
+2026-04-13 16:01:18,053 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:01:18] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:01:20,956 [INFO] vulnscan: Starting scan: 9 files, session=152606ec-511a-463c-85b2-934e018926ce
+2026-04-13 16:01:20,957 [INFO] vulnscan.scanner: Scanning FinalPage.js (2612 chars)
+2026-04-13 16:01:33,052 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:01:33] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:01:48,059 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:01:48] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:02:03,064 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:02:03] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:02:18,059 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:02:18] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:02:33,060 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:02:33] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:02:48,060 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:02:48] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:03:03,065 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:03:03] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:03:18,067 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:03:18] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:03:33,063 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:03:33] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:03:49,030 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:03:49] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:04:04,023 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:04:04] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:04:19,031 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:04:19] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:04:34,042 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:04:34] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:04:48,080 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:04:48] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:05:03,072 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:05:03] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:05:18,083 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:05:18] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:05:34,038 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:05:34] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:05:49,043 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:05:49] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:06:04,044 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:06:04] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:06:20,742 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:06:20] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:06:23,012 [ERROR] vulnscan.scanner: Scan error for FinalPage.js: timed out
+2026-04-13 16:06:23,012 [INFO] vulnscan.scanner: Scanning index.html (499 chars)
+2026-04-13 16:06:33,058 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:06:33] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:06:48,068 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:06:48] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:07:03,055 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:07:03] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:07:18,062 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:07:18] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:07:33,061 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:07:33] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:07:48,063 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:07:48] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:08:03,069 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:08:03] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:08:18,054 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:08:18] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:08:33,058 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:08:33] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:08:48,078 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:08:48] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:09:03,079 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:09:03] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:09:18,079 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:09:18] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:09:33,071 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:09:33] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:09:48,068 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:09:48] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:10:03,060 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:10:03] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:10:18,071 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:10:18] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:10:33,064 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:10:33] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:10:48,060 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:10:48] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:11:03,083 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:11:03] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:11:18,081 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:11:18] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:11:25,033 [ERROR] vulnscan.scanner: Scan error for index.html: timed out
+2026-04-13 16:11:25,034 [INFO] vulnscan.scanner: Scanning Puzzle1.js (2885 chars)
+2026-04-13 16:11:33,071 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:11:33] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:11:48,057 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:11:48] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:12:03,067 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:12:03] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:12:18,065 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:12:18] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:12:33,058 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:12:33] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:12:48,056 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:12:48] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:13:03,086 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:13:03] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:13:18,070 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:13:18] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:13:33,073 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:13:33] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:13:48,079 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:13:48] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:14:03,066 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:14:03] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:14:18,071 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:14:18] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:14:33,051 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:14:33] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:14:48,067 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:14:48] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:15:03,061 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:15:03] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:15:18,065 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:15:18] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:15:33,063 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:15:33] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:15:48,067 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:15:48] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:16:05,962 [INFO] vulnscan: VulnScan starting — http://127.0.0.1:5000
+2026-04-13 16:16:05,977 [INFO] werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2026-04-13 16:16:05,977 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
+2026-04-13 16:16:08,892 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:16:08] "GET / HTTP/1.1" 200 -
+2026-04-13 16:16:09,224 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:16:09] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-04-13 16:16:11,166 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:16:11] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:16:26,141 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:16:26] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:16:29,493 [INFO] vulnscan: Uploaded: FinalPage.js (2688 bytes) session=4367cbc7-58b1-4d66-8afc-26636e7ec587
+2026-04-13 16:16:29,496 [INFO] vulnscan: Uploaded: SplashPage.js (961 bytes) session=4367cbc7-58b1-4d66-8afc-26636e7ec587
+2026-04-13 16:16:29,496 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:16:29] "POST /api/upload HTTP/1.1" 200 -
+2026-04-13 16:16:31,595 [INFO] vulnscan: Starting scan: 2 files, session=4367cbc7-58b1-4d66-8afc-26636e7ec587
+2026-04-13 16:16:31,595 [INFO] vulnscan.scanner: Scanning FinalPage.js (2612 chars)
+2026-04-13 16:16:41,156 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:16:41] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:16:56,156 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:16:56] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:17:11,176 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:17:11] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:17:26,172 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:17:26] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:17:41,151 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:17:41] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:17:56,150 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:17:56] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:18:11,176 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:18:11] "GET /api/status HTTP/1.1" 200 -
+2026-04-13 16:18:26,154 [INFO] werkzeug: 127.0.0.1 - - [13/Apr/2026 16:18:26] "GET /api/status HTTP/1.1" 200 -

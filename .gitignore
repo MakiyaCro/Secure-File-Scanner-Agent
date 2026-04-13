@@ -1,0 +1,84 @@
+# ─── VulnScan — .gitignore ───────────────────────────────────
+
+# Session data — never commit user uploads or scan results
+uploads/
+outputs/
+
+# Runtime logs
+*.log
+vulnscan.log
+
+# Flask secret / session data
+instance/
+.secret_key
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.whl
+MANIFEST
+
+# Virtual environment
+venv/
+.venv/
+env/
+.env/
+ENV/
+
+# Environment variable files — may contain secrets
+.env
+.env.*
+*.env
+!.env.example
+
+# Backup files written by patch system
+*.bak
+
+# OS junk
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.orig
+.project
+.classpath
+.settings/
+
+# pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+*.cover
+.tox/
+
+# mypy / type checkers
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyright/
+
+# Jupyter (just in case)
+.ipynb_checkpoints/
+*.ipynb
+
+# Ollama model files (large binaries, belong in ~/.ollama not here)
+*.gguf
+*.bin
+*.ggml

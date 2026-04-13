@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VULNSCAN v2.4 — Code Security Analysis System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
+<style>
+/* ─── CSS Variables ─────────────────────────────────────────── */
+:root {
+  --green:        #00ff41;
+  --green-dim:    #00b32d;
+  --green-dark:   #004010;
+  --green-glow:   #00ff4188;
+  --amber:        #ffb000;
+  --red:          #ff2222;
+  --red-dim:      #aa0000;
+  --blue:         #00b4ff;
+  --bg:           #020c02;
+  --bg2:          #040f04;
+  --scanline:     rgba(0,255,65,0.03);
+  --font-mono:    'Share Tech Mono', monospace;
+  --font-display: 'VT323', monospace;
+  --border:       1px solid var(--green-dim);
+  --glow:         0 0 8px var(--green-glow);
+  --glow-strong:  0 0 18px var(--green-glow), 0 0 40px #00ff4133;
+}
+
+/* ─── Reset & Base ──────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--green);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  overflow-x: hidden;
+}
+
+/* ─── CRT Scanlines overlay ─────────────────────────────────── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--scanline) 0px,
+    var(--scanline) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+/* ─── Screen flicker ─────────────────────────────────────────── */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background: radial-gradient(ellipse at center,
+    transparent 60%, rgba(0,0,0,0.55) 100%);
+  pointer-events: none;
+  z-index: 9998;
+  animation: screenFlicker 8s infinite;
+}
+@keyframes screenFlicker {
+  0%,98%,100% { opacity: 1; }
+  98.5%       { opacity: 0.92; }
+  99%         { opacity: 0.96; }
+  99.5%       { opacity: 0.88; }
+}
+
+/* ─── Layout ────────────────────────────────────────────────── */
+#app {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  grid-template-columns: 300px 1fr;
+  grid-template-areas:
+    "header header"
+    "sidebar main"
+    "footer footer";
+  min-height: 100vh;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 12px;
+  gap: 10px;
+}
+
+/* ─── Header ────────────────────────────────────────────────── */
+#header {
+  grid-area: header;
+  border: var(--border);
+  border-color: var(--green);
+  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--glow-strong), inset 0 0 30px rgba(0,255,65,0.04);
+  position: relative;
+  overflow: hidden;
+}
+#header::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--green), transparent);
+  animation: headerSweep 4s linear infinite;
+}
+@keyframes headerSweep {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.logo {
+  font-family: var(--font-display);
+  font-size: 2.4rem;
+  color: var(--green);
+  text-shadow: var(--glow-strong);
+  letter-spacing: 4px;
+}
+.logo span { color: var(--amber); }
+.header-status {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--green-dim);
+}
+.status-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--red);
+  margin-right: 5px;
+  animation: blink 1.2s infinite;
+}
+.status-dot.online { background: var(--green); animation: none; box-shadow: var(--glow); }
+@keyframes blink { 0%,100%{opacity:1}50%{opacity:0.3} }
+
+/* ─── Sidebar ───────────────────────────────────────────────── */
+#sidebar {
+  grid-area: sidebar;
+  border: var(--border);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  box-shadow: var(--glow);
+}
+.panel-title {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  letter-spacing: 2px;
+  color: var(--green);
+  border-bottom: var(--border);
+  padding-bottom: 6px;
+  margin-bottom: 4px;
+  text-shadow: var(--glow);
+}
+
+/* Drop zone */
+#dropzone {
+  border: 2px dashed var(--green-dim);
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s;
+  color: var(--green-dim);
+  font-size: 12px;
+  line-height: 1.7;
+  min-height: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+#dropzone:hover, #dropzone.dragging {
+  border-color: var(--green);
+  color: var(--green);
+  box-shadow: var(--glow);
+  background: var(--green-dark);
+}
+#dropzone .dz-icon { font-size: 2rem; display: block; }
+#fileInput { display: none; }
+
+/* File list */
+#fileList { display: flex; flex-direction: column; gap: 3px; max-height: 200px; overflow-y: auto; }
+.file-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 6px;
+  border: 1px solid transparent;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.file-item:hover { border-color: var(--green-dim); background: var(--green-dark); }
+.file-item.active { border-color: var(--green); background: var(--green-dark); color: var(--green); }
+.file-item .fname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.vuln-badge {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 2px;
+  margin-left: 4px;
+  flex-shrink: 0;
+}
+.badge-critical { background: var(--red-dim); color: #fff; }
+.badge-high     { background: #aa4400; color: #fff; }
+.badge-medium   { background: #776600; color: #fff; }
+.badge-low      { background: #005566; color: #fff; }
+.badge-clean    { background: var(--green-dark); color: var(--green-dim); }
+
+/* Severity filter */
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.filter-btn {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 3px 8px;
+  border: 1px solid var(--green-dim);
+  background: transparent;
+  color: var(--green-dim);
+  cursor: pointer;
+  transition: all .15s;
+  letter-spacing: 1px;
+}
+.filter-btn:hover, .filter-btn.active {
+  background: var(--green-dark);
+  color: var(--green);
+  border-color: var(--green);
+  box-shadow: var(--glow);
+}
+.filter-btn.sev-critical.active { border-color: var(--red); color: var(--red); }
+.filter-btn.sev-high.active     { border-color: #ff6600; color: #ff6600; }
+.filter-btn.sev-medium.active   { border-color: var(--amber); color: var(--amber); }
+
+/* Severity summary boxes */
+.sev-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+}
+.sev-box {
+  border: 1px solid;
+  padding: 6px 8px;
+  text-align: center;
+}
+.sev-box .count { font-family: var(--font-display); font-size: 1.8rem; line-height: 1; }
+.sev-box .label { font-size: 10px; letter-spacing: 1px; opacity: .7; }
+.sev-box.critical { border-color: var(--red); color: var(--red); }
+.sev-box.high     { border-color: #ff6600; color: #ff6600; }
+.sev-box.medium   { border-color: var(--amber); color: var(--amber); }
+.sev-box.low      { border-color: var(--blue); color: var(--blue); }
+
+/* Buttons */
+.btn {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 8px 14px;
+  border: 1px solid var(--green);
+  background: transparent;
+  color: var(--green);
+  cursor: pointer;
+  letter-spacing: 2px;
+  transition: all .15s;
+  text-transform: uppercase;
+  width: 100%;
+  text-align: center;
+}
+.btn:hover:not(:disabled) {
+  background: var(--green);
+  color: var(--bg);
+  box-shadow: var(--glow-strong);
+}
+.btn:disabled { opacity: .35; cursor: not-allowed; }
+.btn-danger { border-color: var(--red); color: var(--red); }
+.btn-danger:hover:not(:disabled) { background: var(--red); color: #fff; }
+.btn-amber { border-color: var(--amber); color: var(--amber); }
+.btn-amber:hover:not(:disabled) { background: var(--amber); color: var(--bg); }
+.btn-sm { font-size: 11px; padding: 4px 10px; letter-spacing: 1px; width: auto; }
+
+/* ─── Main panel ────────────────────────────────────────────── */
+#main {
+  grid-area: main;
+  border: var(--border);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--glow);
+}
+.tab-bar {
+  display: flex;
+  border-bottom: var(--border);
+  background: var(--bg2);
+}
+.tab {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 8px 16px;
+  cursor: pointer;
+  border-right: 1px solid var(--green-dark);
+  color: var(--green-dim);
+  letter-spacing: 1px;
+  transition: all .15s;
+  text-transform: uppercase;
+}
+.tab:hover { color: var(--green); background: var(--green-dark); }
+.tab.active { color: var(--green); background: var(--green-dark); border-bottom: 2px solid var(--green); }
+.tab-content { display: none; flex: 1; overflow-y: auto; padding: 16px; }
+.tab-content.active { display: block; }
+
+/* ─── Terminal / Log panel ──────────────────────────────────── */
+#log-panel {
+  font-size: 12px;
+  line-height: 1.6;
+}
+.log-line {
+  padding: 1px 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.log-line::before { content: '> '; color: var(--green-dim); }
+.log-err  { color: var(--red); }
+.log-warn { color: var(--amber); }
+.log-ok   { color: var(--green); text-shadow: var(--glow); }
+.log-info { color: var(--green-dim); }
+.log-dim  { color: #3a6640; }
+
+/* ─── Vulnerability cards ───────────────────────────────────── */
+.vuln-card {
+  border: 1px solid var(--green-dark);
+  margin-bottom: 12px;
+  transition: border-color .2s;
+}
+.vuln-card:hover { border-color: var(--green-dim); }
+.vuln-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  cursor: pointer;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--green-dark);
+}
+.vuln-header:hover { background: var(--green-dark); }
+.sev-tag {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  padding: 2px 8px;
+  letter-spacing: 2px;
+  flex-shrink: 0;
+}
+.sev-tag.critical { background: var(--red-dim);  color: #fff; }
+.sev-tag.high     { background: #7a2f00; color: #ffaa66; }
+.sev-tag.medium   { background: #5a4800; color: var(--amber); }
+.sev-tag.low      { background: #003344; color: var(--blue); }
+.sev-tag.info     { background: #1a1a1a; color: #888; }
+.vuln-title { flex: 1; font-size: 13px; }
+.vuln-cwe   { font-size: 11px; color: var(--green-dim); }
+.vuln-lines { font-size: 11px; color: var(--green-dim); }
+.vuln-body {
+  padding: 12px;
+  display: none;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.vuln-body.open { display: block; }
+.vuln-body h4 { color: var(--green); letter-spacing: 1px; margin: 8px 0 4px; font-size: 11px; }
+.vuln-body p  { color: #8ac88a; }
+.evidence {
+  background: #010a01;
+  border: 1px solid var(--green-dark);
+  padding: 10px;
+  margin: 8px 0;
+  overflow-x: auto;
+  font-size: 11px;
+  color: #aaeaaa;
+}
+.vuln-actions { display: flex; gap: 8px; margin-top: 10px; }
+
+/* ─── Diff viewer ───────────────────────────────────────────── */
+.diff-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 12px 0;
+}
+.diff-pane {
+  border: var(--border);
+  overflow: auto;
+  max-height: 500px;
+}
+.diff-pane-title {
+  background: var(--bg2);
+  padding: 6px 10px;
+  font-size: 11px;
+  letter-spacing: 1px;
+  border-bottom: var(--border);
+  color: var(--green-dim);
+  position: sticky;
+  top: 0;
+}
+.diff-pane pre {
+  padding: 10px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #8acd8a;
+  white-space: pre;
+}
+.diff-pane pre .line-num {
+  display: inline-block;
+  width: 32px;
+  color: var(--green-dark);
+  user-select: none;
+  border-right: 1px solid var(--green-dark);
+  margin-right: 8px;
+  text-align: right;
+}
+.line-changed { background: rgba(0,180,255,0.07); }
+.line-added   { background: rgba(0,255,65,0.08); }
+.line-removed { background: rgba(255,34,34,0.08); text-decoration: line-through; color: #885050; }
+
+/* ─── Integrity badge ───────────────────────────────────────── */
+.integrity-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid;
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+.integrity-badge.pass { border-color: var(--green); color: var(--green); }
+.integrity-badge.fail { border-color: var(--red); color: var(--red); }
+.integrity-badge.unknown { border-color: var(--amber); color: var(--amber); }
+
+/* ─── Progress bar ──────────────────────────────────────────── */
+.progress-wrap {
+  border: 1px solid var(--green-dim);
+  height: 16px;
+  overflow: hidden;
+  position: relative;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--green-dim);
+  transition: width .3s;
+  position: relative;
+  overflow: hidden;
+}
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  animation: progressShimmer 1.5s infinite;
+}
+@keyframes progressShimmer { 100%{ left: 100%; } }
+.progress-label {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--green);
+  mix-blend-mode: difference;
+}
+
+/* ─── Spinner ───────────────────────────────────────────────── */
+.spinner {
+  display: inline-block;
+  width: 14px; height: 14px;
+  border: 2px solid var(--green-dark);
+  border-top-color: var(--green);
+  border-radius: 50%;
+  animation: spin .6s linear infinite;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+@keyframes spin { to{ transform: rotate(360deg); } }
+
+/* ─── Toast ─────────────────────────────────────────────────── */
+#toast {
+  position: fixed;
+  bottom: 24px; right: 24px;
+  padding: 10px 18px;
+  border: 1px solid var(--green);
+  background: var(--bg);
+  color: var(--green);
+  font-size: 12px;
+  letter-spacing: 1px;
+  box-shadow: var(--glow-strong);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .3s;
+  z-index: 10000;
+  max-width: 320px;
+}
+#toast.show { opacity: 1; }
+#toast.error { border-color: var(--red); color: var(--red); }
+
+/* ─── Footer ────────────────────────────────────────────────── */
+#footer {
+  grid-area: footer;
+  border: var(--border);
+  padding: 6px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  color: var(--green-dark);
+  letter-spacing: 1px;
+}
+.cursor-blink {
+  display: inline-block;
+  width: 8px; height: 14px;
+  background: var(--green);
+  vertical-align: middle;
+  animation: cursorBlink .8s step-start infinite;
+}
+@keyframes cursorBlink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+/* ─── Scrollbar ─────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--green-dark); }
+::-webkit-scrollbar-thumb:hover { background: var(--green-dim); }
+
+/* ─── Code view ─────────────────────────────────────────────── */
+.code-view {
+  background: #010a01;
+  border: var(--border);
+  padding: 12px;
+  overflow: auto;
+  font-size: 11px;
+  line-height: 1.6;
+  color: #8acd8a;
+  max-height: 400px;
+  white-space: pre;
+}
+
+/* ─── Util ──────────────────────────────────────────────────── */
+.hidden { display: none !important; }
+.mt-8 { margin-top: 8px; }
+.flex-row { display: flex; gap: 8px; align-items: center; }
+.text-red    { color: var(--red); }
+.text-amber  { color: var(--amber); }
+.text-green  { color: var(--green); }
+.text-dim    { color: var(--green-dim); }
+.text-small  { font-size: 11px; }
+.full-width  { width: 100%; }
+hr.term { border: none; border-top: 1px solid var(--green-dark); margin: 10px 0; }
+
+/* ─── Input ─────────────────────────────────────────────────── */
+select.term-select {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--bg);
+  color: var(--green);
+  border: 1px solid var(--green-dim);
+  padding: 5px 8px;
+  width: 100%;
+  cursor: pointer;
+}
+select.term-select:focus { outline: none; border-color: var(--green); box-shadow: var(--glow); }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- ── HEADER ── -->
+  <header id="header">
+    <div>
+      <div class="logo">VULN<span>SCAN</span> <small style="font-size:1rem;color:var(--green-dim)">v2.4</small></div>
+      <div style="font-size:11px;color:var(--green-dim);letter-spacing:2px;margin-top:2px">
+        LOCAL AI CODE SECURITY ANALYSIS SYSTEM // QWEN3.5
+      </div>
+    </div>
+    <div class="header-status">
+      <span>
+        <span class="status-dot" id="ollamaDot"></span>
+        <span id="ollamaStatus">CHECKING...</span>
+      </span>
+      <span id="clockDisplay" style="color:var(--green);text-shadow:var(--glow)"></span>
+    </div>
+  </header>
+
+  <!-- ── SIDEBAR ── -->
+  <aside id="sidebar">
+    <div class="panel-title">[ FILE UPLOAD ]</div>
+    <div id="dropzone" onclick="document.getElementById('fileInput').click()">
+      <span class="dz-icon">⬡</span>
+      <span>DROP FILES / CLICK TO BROWSE</span>
+      <span style="font-size:10px;opacity:.6">PY JS TS JAVA GO RS PHP C CPP CS SQL HTML ...</span>
+    </div>
+    <input type="file" id="fileInput" multiple accept=".py,.js,.ts,.jsx,.tsx,.java,.c,.cpp,.h,.cs,.go,.rs,.php,.rb,.swift,.kt,.sql,.html,.css,.json,.yaml,.yml,.toml,.sh,.bash,.xml,.tf,.env,.cfg,.conf">
+    <button class="btn btn-sm" onclick="uploadFiles()" id="uploadBtn" disabled>[ UPLOAD FILES ]</button>
+
+    <hr class="term">
+    <div class="panel-title">[ LOADED FILES ]</div>
+    <div id="fileList"><div class="log-dim" style="font-size:11px;padding:4px">No files loaded.</div></div>
+
+    <hr class="term">
+    <div class="panel-title">[ SCAN CONTROLS ]</div>
+    <div style="font-size:11px;color:var(--green-dim);margin-bottom:4px">SEVERITY FILTER:</div>
+    <div class="filter-row" id="severityFilter">
+      <button class="filter-btn active" data-sev="all">ALL</button>
+      <button class="filter-btn sev-critical" data-sev="critical">CRIT</button>
+      <button class="filter-btn sev-high"     data-sev="high">HIGH</button>
+      <button class="filter-btn sev-medium"   data-sev="medium">MED</button>
+      <button class="filter-btn sev-low"      data-sev="low">LOW</button>
+    </div>
+    <div class="mt-8"></div>
+    <button class="btn" onclick="runScan()" id="scanBtn" disabled>[ RUN SCAN ]</button>
+
+    <hr class="term">
+    <div class="panel-title">[ SUMMARY ]</div>
+    <div class="sev-summary" id="sevSummary">
+      <div class="sev-box critical"><div class="count" id="cnt-critical">—</div><div class="label">CRITICAL</div></div>
+      <div class="sev-box high">   <div class="count" id="cnt-high">—</div>    <div class="label">HIGH</div></div>
+      <div class="sev-box medium"> <div class="count" id="cnt-medium">—</div>  <div class="label">MEDIUM</div></div>
+      <div class="sev-box low">    <div class="count" id="cnt-low">—</div>     <div class="label">LOW</div></div>
+    </div>
+
+    <hr class="term">
+    <button class="btn btn-danger btn-sm" onclick="clearSession()">[ CLEAR SESSION ]</button>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <main id="main">
+    <div class="tab-bar">
+      <div class="tab active" data-tab="terminal">TERMINAL</div>
+      <div class="tab" data-tab="results">RESULTS</div>
+      <div class="tab" data-tab="fix">FIX VIEWER</div>
+      <div class="tab" data-tab="about">ABOUT</div>
+    </div>
+
+    <!-- TERMINAL TAB -->
+    <div class="tab-content active" id="tab-terminal">
+      <div id="log-panel"></div>
+      <div id="progressSection" class="hidden mt-8">
+        <div style="font-size:11px;color:var(--green-dim);margin-bottom:4px" id="progressLabel">INITIALIZING...</div>
+        <div class="progress-wrap">
+          <div class="progress-fill" id="progressBar" style="width:0%"></div>
+          <div class="progress-label" id="progressPct">0%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULTS TAB -->
+    <div class="tab-content" id="tab-results">
+      <div id="resultsPanel">
+        <div class="log-dim" style="font-size:12px">Run a scan to see vulnerability results.</div>
+      </div>
+    </div>
+
+    <!-- FIX VIEWER TAB -->
+    <div class="tab-content" id="tab-fix">
+      <div id="fixPanel">
+        <div class="log-dim" style="font-size:12px">Select a vulnerability and click [GENERATE FIX] to view remediation.</div>
+      </div>
+    </div>
+
+    <!-- ABOUT TAB -->
+    <div class="tab-content" id="tab-about">
+      <div style="max-width:600px;line-height:2;color:var(--green-dim);font-size:12px">
+        <div class="panel-title" style="margin-bottom:12px">[ VULNSCAN — SYSTEM INFORMATION ]</div>
+        <p>VULNSCAN is a <span class="text-green">local-only</span> AI-powered code vulnerability scanner.</p>
+        <p>All analysis runs on your machine via <span class="text-green">Ollama + Qwen3.5</span>. No code leaves your system.</p>
+        <hr class="term">
+        <div class="panel-title" style="margin:12px 0 8px">[ SECURITY MODEL ]</div>
+        <p>✓ Files scanned for prompt injection before analysis</p>
+        <p>✓ Path traversal prevention on all file operations</p>
+        <p>✓ Rate limiting: 10 requests per 60 seconds</p>
+        <p>✓ 50 MB total upload cap, 500 KB per file cap</p>
+        <p>✓ 100 file maximum per session</p>
+        <p>✓ No code execution — static analysis only</p>
+        <p>✓ Session-isolated file storage</p>
+        <p>✓ Security headers on all responses</p>
+        <hr class="term">
+        <div class="panel-title" style="margin:12px 0 8px">[ SUPPORTED FILE TYPES ]</div>
+        <p>.py .js .ts .jsx .tsx .java .c .cpp .h .cs .go .rs .php</p>
+        <p>.rb .swift .kt .scala .sh .sql .html .css .json .yaml</p>
+        <p>.toml .env .cfg .conf .xml .tf .hcl</p>
+        <hr class="term">
+        <div class="panel-title" style="margin:12px 0 8px">[ SETUP REQUIREMENTS ]</div>
+        <p>1. Install Ollama: <span class="text-green">https://ollama.com</span></p>
+        <p>2. Pull model:     <span class="text-green">ollama pull qwen3.5</span></p>
+        <p>3. Start Ollama:   <span class="text-green">ollama serve</span></p>
+        <p>4. Run VulnScan:   <span class="text-green">python app.py</span></p>
+      </div>
+    </div>
+  </main>
+
+  <!-- ── FOOTER ── -->
+  <footer id="footer">
+    <span>VULNSCAN v2.4 // LOCAL INSTANCE // <span id="sessionId">NO SESSION</span></span>
+    <span>QWEN3.5 VIA OLLAMA // <span class="text-green">OFFLINE-CAPABLE</span></span>
+    <span>SYS:<span class="cursor-blink"></span></span>
+  </footer>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+//  State
+// ════════════════════════════════════════════════════════════
+const state = {
+  uploadedFiles: [],
+  scanResults: null,
+  activeSeverity: 'all',
+  fixData: null,
+};
+
+// ════════════════════════════════════════════════════════════
+//  Clock
+// ════════════════════════════════════════════════════════════
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clockDisplay').textContent =
+    now.toISOString().replace('T',' ').substring(0,19) + ' UTC';
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ════════════════════════════════════════════════════════════
+//  Tabs
+// ════════════════════════════════════════════════════════════
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+  });
+});
+
+// ════════════════════════════════════════════════════════════
+//  Logging
+// ════════════════════════════════════════════════════════════
+function log(msg, type='info') {
+  const panel = document.getElementById('log-panel');
+  const div = document.createElement('div');
+  div.className = `log-line log-${type}`;
+  div.textContent = `[${new Date().toTimeString().split(' ')[0]}] ${msg}`;
+  panel.appendChild(div);
+  panel.scrollTop = panel.scrollHeight;
+}
+
+// ════════════════════════════════════════════════════════════
+//  Toast
+// ════════════════════════════════════════════════════════════
+let toastTimer;
+function toast(msg, isError=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (isError ? ' error' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.className = '', 3000);
+}
+
+// ════════════════════════════════════════════════════════════
+//  Progress
+// ════════════════════════════════════════════════════════════
+function setProgress(pct, label) {
+  const sec = document.getElementById('progressSection');
+  const bar = document.getElementById('progressBar');
+  const pctEl = document.getElementById('progressPct');
+  const lblEl = document.getElementById('progressLabel');
+  if (pct === null) { sec.classList.add('hidden'); return; }
+  sec.classList.remove('hidden');
+  bar.style.width = pct + '%';
+  pctEl.textContent = pct + '%';
+  if (label) lblEl.textContent = label;
+}
+
+// ════════════════════════════════════════════════════════════
+//  Ollama Status Check
+// ════════════════════════════════════════════════════════════
+async function checkOllama() {
+  try {
+    const r = await fetch('/api/status');
+    const d = await r.json();
+    const dot = document.getElementById('ollamaDot');
+    const lbl = document.getElementById('ollamaStatus');
+    if (d.ollama === 'online') {
+      dot.className = 'status-dot online';
+      lbl.textContent = d.qwen_ready ? 'QWEN3.5 READY' : 'OLLAMA ONLINE (no qwen3.5)';
+      lbl.style.color = d.qwen_ready ? 'var(--green)' : 'var(--amber)';
+    } else {
+      dot.className = 'status-dot';
+      lbl.textContent = 'OLLAMA OFFLINE';
+      lbl.style.color = 'var(--red)';
+    }
+  } catch {}
+}
+checkOllama();
+setInterval(checkOllama, 15000);
+
+// ════════════════════════════════════════════════════════════
+//  File Drop Zone
+// ════════════════════════════════════════════════════════════
+const dz = document.getElementById('dropzone');
+['dragenter','dragover'].forEach(e => dz.addEventListener(e, ev => {
+  ev.preventDefault(); dz.classList.add('dragging');
+}));
+['dragleave','drop'].forEach(e => dz.addEventListener(e, () => dz.classList.remove('dragging')));
+dz.addEventListener('drop', ev => {
+  ev.preventDefault();
+  handleNewFiles(ev.dataTransfer.files);
+});
+document.getElementById('fileInput').addEventListener('change', function() {
+  handleNewFiles(this.files);
+  this.value = '';
+});
+
+let pendingFiles = [];
+function handleNewFiles(files) {
+  for (const f of files) {
+    if (!pendingFiles.find(p => p.name === f.name)) pendingFiles.push(f);
+  }
+  document.getElementById('uploadBtn').disabled = pendingFiles.length === 0;
+  renderPendingFiles();
+  log(`${pendingFiles.length} file(s) queued for upload.`);
+}
+function renderPendingFiles() {
+  const list = document.getElementById('fileList');
+  if (pendingFiles.length === 0 && state.uploadedFiles.length === 0) {
+    list.innerHTML = '<div class="log-dim" style="font-size:11px;padding:4px">No files loaded.</div>';
+    return;
+  }
+  const allFiles = [...new Set([...state.uploadedFiles, ...pendingFiles.map(f=>f.name)])];
+  list.innerHTML = allFiles.map(name => `
+    <div class="file-item" title="${name}">
+      <span class="fname">${name}</span>
+    </div>`).join('');
+}
+
+// ════════════════════════════════════════════════════════════
+//  Upload
+// ════════════════════════════════════════════════════════════
+async function uploadFiles() {
+  if (!pendingFiles.length) return;
+  const btn = document.getElementById('uploadBtn');
+  btn.disabled = true;
+  log('Uploading ' + pendingFiles.length + ' file(s)...', 'info');
+  setProgress(10, 'UPLOADING FILES...');
+
+  const fd = new FormData();
+  pendingFiles.forEach(f => fd.append('files', f));
+
+  try {
+    const r = await fetch('/api/upload', { method: 'POST', body: fd });
+    const d = await r.json();
+    if (!r.ok) { log('Upload error: ' + d.error, 'err'); toast(d.error, true); return; }
+
+    state.uploadedFiles = [...new Set([...state.uploadedFiles, ...d.files])];
+    pendingFiles = [];
+    renderFileList();
+    document.getElementById('scanBtn').disabled = false;
+    document.getElementById('uploadBtn').disabled = true;
+
+    log(`Uploaded: ${d.files.join(', ')}`, 'ok');
+    if (d.skipped?.length) {
+      d.skipped.forEach(s => log(`Skipped ${s.name}: ${s.reason}`, 'warn'));
+    }
+    document.getElementById('sessionId').textContent = d.session_id?.substring(0,8).toUpperCase() || 'ACTIVE';
+    toast(`${d.files.length} file(s) uploaded`);
+    setProgress(null);
+  } catch (e) {
+    log('Upload failed: ' + e.message, 'err');
+    toast('Upload failed', true);
+  } finally {
+    btn.disabled = false;
+    setProgress(null);
+  }
+}
+
+function renderFileList() {
+  const list = document.getElementById('fileList');
+  if (!state.uploadedFiles.length) {
+    list.innerHTML = '<div class="log-dim" style="font-size:11px;padding:4px">No files loaded.</div>';
+    return;
+  }
+  list.innerHTML = state.uploadedFiles.map(name => {
+    const vulns = state.scanResults?.files?.find(f=>f.filename===name)?.vulnerabilities || [];
+    const badge = vulns.length
+      ? `<span class="vuln-badge ${severityBadgeClass(topSeverity(vulns))}">${vulns.length}</span>`
+      : (state.scanResults ? '<span class="vuln-badge badge-clean">✓</span>' : '');
+    return `<div class="file-item" title="${name}"><span class="fname">${name}</span>${badge}</div>`;
+  }).join('');
+}
+
+function topSeverity(vulns) {
+  const order = ['critical','high','medium','low','info'];
+  for (const s of order) if (vulns.find(v=>v.severity===s)) return s;
+  return 'info';
+}
+function severityBadgeClass(sev) {
+  return {critical:'badge-critical',high:'badge-high',medium:'badge-medium',low:'badge-low',info:'badge-clean'}[sev]||'badge-clean';
+}
+
+// ════════════════════════════════════════════════════════════
+//  Severity Filter
+// ════════════════════════════════════════════════════════════
+document.getElementById('severityFilter').addEventListener('click', e => {
+  const btn = e.target.closest('.filter-btn');
+  if (!btn) return;
+  document.querySelectorAll('#severityFilter .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  state.activeSeverity = btn.dataset.sev;
+});
+
+// ════════════════════════════════════════════════════════════
+//  Scan
+// ════════════════════════════════════════════════════════════
+async function runScan() {
+  const btn = document.getElementById('scanBtn');
+  btn.disabled = true;
+  switchTab('terminal');
+
+  log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'dim');
+  log(`INITIATING SCAN // SEVERITY: ${state.activeSeverity.toUpperCase()} // MODEL: QWEN3.5`);
+  log(`FILES: ${state.uploadedFiles.join(' | ')}`, 'info');
+  setProgress(5, 'INITIALIZING QWEN3.5...');
+
+  // Fake incremental progress while waiting
+  let prog = 5;
+  const ticker = setInterval(() => {
+    prog = Math.min(prog + (Math.random() * 3), 90);
+    setProgress(Math.round(prog), `ANALYZING ${state.uploadedFiles[Math.floor(Math.random()*state.uploadedFiles.length)]||'...'}`);
+  }, 1500);
+
+  try {
+    const r = await fetch('/api/scan', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ severity: state.activeSeverity })
+    });
+    clearInterval(ticker);
+    const d = await r.json();
+    if (!r.ok) { log('Scan error: ' + d.error, 'err'); toast(d.error, true); return; }
+
+    state.scanResults = d;
+    setProgress(100, 'SCAN COMPLETE');
+    setTimeout(() => setProgress(null), 800);
+
+    log(`Scan complete in ${d.elapsed_seconds}s`, 'ok');
+    log(`Total vulnerabilities: ${d.total_vulnerabilities}`, d.total_vulnerabilities > 0 ? 'warn' : 'ok');
+    const s = d.severity_summary;
+    if (s.critical) log(`  CRITICAL: ${s.critical}`, 'err');
+    if (s.high)     log(`  HIGH:     ${s.high}`, 'warn');
+    if (s.medium)   log(`  MEDIUM:   ${s.medium}`, 'info');
+    if (s.low)      log(`  LOW:      ${s.low}`, 'info');
+    if (!d.total_vulnerabilities) log('No vulnerabilities detected.', 'ok');
+
+    updateSeverityCounts(s);
+    renderFileList();
+    renderResults(d);
+    switchTab('results');
+  } catch (e) {
+    clearInterval(ticker);
+    log('Scan failed: ' + e.message, 'err');
+    toast('Scan failed: ' + e.message, true);
+    setProgress(null);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function updateSeverityCounts(s) {
+  ['critical','high','medium','low'].forEach(k => {
+    document.getElementById('cnt-'+k).textContent = s[k] ?? 0;
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+//  Results Rendering
+// ════════════════════════════════════════════════════════════
+function renderResults(data) {
+  const panel = document.getElementById('resultsPanel');
+  if (!data.files?.length) { panel.innerHTML = '<div class="log-dim">No results.</div>'; return; }
+
+  let html = `<div class="flex-row" style="margin-bottom:12px;flex-wrap:wrap;gap:8px">
+    <span class="text-dim text-small">SCAN ID: ${data.scan_id?.substring(0,8).toUpperCase()}</span>
+    <span class="text-dim text-small">MODEL: ${data.model}</span>
+    <span class="text-dim text-small">ELAPSED: ${data.elapsed_seconds}s</span>
+    <span class="${data.total_vulnerabilities>0?'text-amber':'text-green'} text-small">
+      TOTAL VULNS: ${data.total_vulnerabilities}
+    </span>
+  </div>`;
+
+  for (const fr of data.files) {
+    html += `<div style="margin-bottom:20px">
+      <div style="font-family:var(--font-display);font-size:1.1rem;letter-spacing:2px;
+           border-bottom:1px solid var(--green-dark);padding-bottom:4px;margin-bottom:8px">
+        ▶ ${fr.filename}
+        <span class="text-dim text-small" style="margin-left:8px">${fr.lines} LINES // ${fr.size_bytes} BYTES</span>
+        ${fr.vulnerabilities.length===0?'<span class="text-green" style="float:right;font-size:0.9rem">✓ CLEAN</span>':''}
+      </div>`;
+
+    if (!fr.vulnerabilities.length) {
+      html += '<div class="log-dim text-small" style="padding:4px 8px">No vulnerabilities found in this file.</div>';
+    } else {
+      for (const v of fr.vulnerabilities) {
+        html += vulnCard(fr.filename, v);
+      }
+    }
+    html += '</div>';
+  }
+
+  panel.innerHTML = html;
+}
+
+function vulnCard(filename, v) {
+  const sev = (v.severity || 'info').toLowerCase();
+  return `
+  <div class="vuln-card" id="vcard-${v.id}">
+    <div class="vuln-header" onclick="toggleVuln('${v.id}')">
+      <span class="sev-tag ${sev}">${sev.toUpperCase()}</span>
+      <span class="vuln-title">${escHtml(v.title || 'Unknown Vulnerability')}</span>
+      ${v.cwe ? `<span class="vuln-cwe">${escHtml(v.cwe)}</span>` : ''}
+      ${v.line_start ? `<span class="vuln-lines">L${v.line_start}–${v.line_end||v.line_start}</span>` : ''}
+      <span style="margin-left:auto;color:var(--green-dim);font-size:18px" id="toggle-${v.id}">▼</span>
+    </div>
+    <div class="vuln-body" id="vbody-${v.id}">
+      <h4>DESCRIPTION</h4>
+      <p>${escHtml(v.description || 'No description.')}</p>
+      <h4>IMPACT</h4>
+      <p>${escHtml(v.impact || 'Unknown')}</p>
+      ${v.evidence ? `<h4>EVIDENCE</h4><div class="evidence">${escHtml(v.evidence)}</div>` : ''}
+      <h4>RECOMMENDATION</h4>
+      <p>${escHtml(v.recommendation || 'See description.')}</p>
+      <div class="vuln-actions">
+        <button class="btn btn-amber btn-sm" onclick="generateFix('${escAttr(filename)}','${escAttr(v.id)}')">
+          ⚙ GENERATE FIX
+        </button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggleVuln(id) {
+  const body = document.getElementById('vbody-'+id);
+  const icon = document.getElementById('toggle-'+id);
+  body.classList.toggle('open');
+  icon.textContent = body.classList.contains('open') ? '▲' : '▼';
+}
+
+// ════════════════════════════════════════════════════════════
+//  Fix Generation
+// ════════════════════════════════════════════════════════════
+async function generateFix(filename, vulnId) {
+  switchTab('fix');
+  const panel = document.getElementById('fixPanel');
+  panel.innerHTML = `<div class="flex-row"><span class="spinner"></span> GENERATING FIX — THIS MAY TAKE 1–3 MINUTES...</div>`;
+  switchTab('terminal');
+  log(`Generating fix for ${filename} // ${vulnId}...`, 'info');
+
+  try {
+    const r = await fetch('/api/fix', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ filename, vuln_id: vulnId })
+    });
+    const d = await r.json();
+    if (!r.ok) { log('Fix error: ' + d.error, 'err'); toast(d.error, true); return; }
+
+    state.fixData = d;
+    log('Fix generated. Integrity check: ' + (d.integrity_check?.passes === true ? 'PASS' : d.integrity_check?.passes === false ? 'FAIL' : 'UNKNOWN'), d.integrity_check?.passes ? 'ok' : 'warn');
+    renderFix(d);
+    switchTab('fix');
+  } catch(e) {
+    log('Fix generation failed: ' + e.message, 'err');
+    toast('Fix failed', true);
+  }
+}
+
+function renderFix(d) {
+  const ic = d.integrity_check || {};
+  const icClass = ic.passes === true ? 'pass' : ic.passes === false ? 'fail' : 'unknown';
+  const icLabel = ic.passes === true ? '✓ INTEGRITY PASS' : ic.passes === false ? '✗ INTEGRITY FAIL' : '? INTEGRITY UNKNOWN';
+
+  const changes = (d.changes||[]).map(c =>
+    `<div style="margin-bottom:6px;font-size:12px"><span class="text-dim">L${c.line}: </span>${escHtml(c.description)}</div>`
+  ).join('');
+
+  const origLines = (d.vulnerability?.evidence || '(original not captured)').split('\n');
+  const fixLines  = (d.fixed_code || '').split('\n');
+
+  const panel = document.getElementById('fixPanel');
+  panel.innerHTML = `
+    <div class="flex-row" style="margin-bottom:12px;flex-wrap:wrap;gap:10px">
+      <span style="font-family:var(--font-display);font-size:1.2rem;letter-spacing:2px">
+        FIX: ${escHtml(d.filename)}
+      </span>
+      <span class="integrity-badge ${icClass}">${icLabel}</span>
+      <span class="text-dim text-small">CONFIDENCE: ${ic.confidence||'?'}</span>
+    </div>
+
+    ${ic.issues?.length ? `
+    <div style="border:1px solid var(--amber);padding:8px 12px;margin-bottom:12px;font-size:12px;color:var(--amber)">
+      ⚠ INTEGRITY ISSUES:<br>${ic.issues.map(i=>`&nbsp;&nbsp;• ${escHtml(i)}`).join('<br>')}
+    </div>` : ''}
+
+    <div style="margin-bottom:12px">
+      <div class="panel-title" style="margin-bottom:6px">[ CHANGES MADE ]</div>
+      ${changes || '<div class="log-dim text-small">No change details provided.</div>'}
+    </div>
+
+    ${d.integrity_notes ? `
+    <div style="margin-bottom:12px;font-size:12px;color:var(--green-dim)">
+      <span class="text-green">INTEGRITY NOTE:</span> ${escHtml(d.integrity_notes)}
+    </div>` : ''}
+
+    <div class="diff-container">
+      <div class="diff-pane">
+        <div class="diff-pane-title">ORIGINAL (VULNERABLE)</div>
+        <pre>${renderLineNumbers(d.vulnerability?.evidence || 'N/A', d.vulnerability?.line_start || 1)}</pre>
+      </div>
+      <div class="diff-pane">
+        <div class="diff-pane-title">FIXED VERSION</div>
+        <pre>${renderLineNumbers(d.fixed_code || '', 1)}</pre>
+      </div>
+    </div>
+
+    <div class="flex-row mt-8" style="flex-wrap:wrap;gap:8px">
+      <button class="btn btn-amber" onclick="applyPatch()">⚙ APPLY PATCH TO FILE</button>
+      <button class="btn" onclick="copyFixed()">⎘ COPY FIXED CODE</button>
+    </div>
+    <div id="patchStatus" class="mt-8"></div>
+  `;
+}
+
+function renderLineNumbers(code, startLine=1) {
+  return code.split('\n').map((line, i) => {
+    const n = String(startLine + i).padStart(4, ' ');
+    return `<span class="line-num">${escHtml(n)}</span>${escHtml(line)}`;
+  }).join('\n');
+}
+
+async function applyPatch() {
+  if (!state.fixData) return;
+  const r = await fetch('/api/apply-patch', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ filename: state.fixData.filename, fixed_code: state.fixData.fixed_code })
+  });
+  const d = await r.json();
+  const el = document.getElementById('patchStatus');
+  if (r.ok) {
+    el.innerHTML = `<span class="text-green">✓ PATCH APPLIED // BACKUP: ${escHtml(d.backup)}</span>`;
+    log(`Patch applied to ${state.fixData.filename}`, 'ok');
+    toast('Patch applied!');
+  } else {
+    el.innerHTML = `<span class="text-red">✗ PATCH FAILED: ${escHtml(d.error)}</span>`;
+    toast(d.error, true);
+  }
+}
+
+function copyFixed() {
+  if (!state.fixData?.fixed_code) return;
+  navigator.clipboard.writeText(state.fixData.fixed_code).then(() => toast('Copied to clipboard!'));
+}
+
+// ════════════════════════════════════════════════════════════
+//  Clear Session
+// ════════════════════════════════════════════════════════════
+async function clearSession() {
+  if (!confirm('Clear all files and results?')) return;
+  await fetch('/api/session/clear', { method: 'POST' });
+  state.uploadedFiles = [];
+  state.scanResults = null;
+  state.fixData = null;
+  pendingFiles = [];
+  renderFileList();
+  document.getElementById('resultsPanel').innerHTML = '<div class="log-dim">Run a scan to see vulnerability results.</div>';
+  document.getElementById('fixPanel').innerHTML = '<div class="log-dim">Select a vulnerability and click [GENERATE FIX] to view remediation.</div>';
+  document.getElementById('scanBtn').disabled = true;
+  document.getElementById('sessionId').textContent = 'NO SESSION';
+  ['critical','high','medium','low'].forEach(k => document.getElementById('cnt-'+k).textContent = '—');
+  log('Session cleared.', 'warn');
+  toast('Session cleared');
+}
+
+// ════════════════════════════════════════════════════════════
+//  Util
+// ════════════════════════════════════════════════════════════
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab===name));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id==='tab-'+name));
+}
+
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escAttr(s) {
+  return String(s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+}
+
+// ─── Boot message ────────────────────────────────────────────
+log('VULNSCAN v2.4 INITIALIZED', 'ok');
+log('QWEN3.5 LOCAL AI SECURITY ANALYSIS SYSTEM', 'ok');
+log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'dim');
+log('Upload code files to begin analysis.', 'info');
+log('All processing is local — no data leaves this machine.', 'info');
+</script>
+</body>
+</html>
