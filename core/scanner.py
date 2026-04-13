@@ -14,7 +14,7 @@ log = logging.getLogger("vulnscan.scanner")
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
 MODEL = "qwen3.5:9b"          # adjust to exact tag e.g. "qwen3:8b"
-TIMEOUT = 300            # seconds per LLM call
+TIMEOUT = 600            # seconds per LLM call
 
 # ─── Prompt templates ────────────────────────────────────────────────────────
 
